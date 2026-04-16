@@ -1,0 +1,231 @@
+{
+  "deployment": {
+    "workspace_id": "4850ec28-2ac1-4c80-a70d-977ab969085d",
+    "workspace_name": "medallion-analytics",
+    "environment": "production",
+    "timestamp": "2024-12-19T00:00:00Z"
+  },
+  "lakehouses": {
+    "bronze": {
+      "name": "medallion_bronze",
+      "description": "Raw data ingestion layer - source-as-received data with minimal transformation",
+      "tier": "Bronze",
+      "partitioning": "ingestion_date",
+      "retention_days": 90,
+      "optimization": {
+        "write_optimized": true,
+        "append_only": true,
+        "vorder": false,
+        "optimize_write": false
+      }
+    },
+    "silver": {
+      "name": "medallion_silver",
+      "description": "Cleaned and validated data layer - deduplicated and conformed schema",
+      "tier": "Silver",
+      "partitioning": "business_date",
+      "retention_days": 730,
+      "optimization": {
+        "write_optimized": false,
+        "append_only": false,
+        "vorder": true,
+        "optimize_write": true,
+        "binsize_gb": 1
+      }
+    },
+    "gold": {
+      "name": "medallion_gold",
+      "description": "Analytics-ready layer - aggregated and business metrics",
+      "tier": "Gold",
+      "partitioning": "period",
+      "retention_days": 2555,
+      "optimization": {
+        "write_optimized": false,
+        "append_only": false,
+        "vorder": true,
+        "optimize_write": true,
+        "binsize_gb": 1,
+        "zorder_columns": ["category", "date", "region"]
+      }
+    }
+  },
+  "notebooks": {
+    "phase_0": [
+      {
+        "name": "00_Generate_Sample_Data.py",
+        "description": "Generate realistic sample datasets for testing medallion flow",
+        "order": 1,
+        "timeout_minutes": 15,
+        "lakehouse_binding": "bronze"
+      },
+      {
+        "name": "00_Workspace_Setup.py",
+        "description": "Initialize workspace configuration and folder structure",
+        "order": 2,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "bronze"
+      }
+    ],
+    "phase_1": [
+      {
+        "name": "01_Bronze_Ingestion.py",
+        "description": "Multi-format ingestion into Bronze layer with metadata tracking",
+        "order": 3,
+        "timeout_minutes": 20,
+        "lakehouse_binding": "bronze",
+        "dependencies": ["00_Workspace_Setup.py"]
+      },
+      {
+        "name": "01_Bronze_Validation.py",
+        "description": "Validate Bronze layer data quality and schema",
+        "order": 4,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "bronze",
+        "dependencies": ["01_Bronze_Ingestion.py"]
+      }
+    ],
+    "phase_2": [
+      {
+        "name": "02_Quality_Rules_Engine.py",
+        "description": "Define and apply quality rules for Silver layer transformations",
+        "order": 5,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "silver"
+      },
+      {
+        "name": "02_Silver_Transform.py",
+        "description": "Bronze-to-Silver transformation with deduplication and validation",
+        "order": 6,
+        "timeout_minutes": 20,
+        "lakehouse_binding": "silver",
+        "dependencies": ["01_Bronze_Validation.py"]
+      },
+      {
+        "name": "02_Silver_Validation.py",
+        "description": "Validate Silver layer transformations and data quality",
+        "order": 7,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "silver",
+        "dependencies": ["02_Silver_Transform.py"]
+      }
+    ],
+    "phase_3": [
+      {
+        "name": "03_Gold_Aggregations.py",
+        "description": "Create aggregated analytics tables in Gold layer",
+        "order": 8,
+        "timeout_minutes": 20,
+        "lakehouse_binding": "gold",
+        "dependencies": ["02_Silver_Validation.py"]
+      },
+      {
+        "name": "03_Gold_Validation.py",
+        "description": "Validate Gold layer aggregations and performance",
+        "order": 9,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "gold",
+        "dependencies": ["03_Gold_Aggregations.py"]
+      }
+    ],
+    "phase_4": [
+      {
+        "name": "04_Master_Orchestration_Pipeline.py",
+        "description": "Master orchestration for Bronze-Silver-Gold pipeline execution",
+        "order": 10,
+        "timeout_minutes": 60,
+        "lakehouse_binding": "gold"
+      },
+      {
+        "name": "04_Pipeline_Monitoring.py",
+        "description": "Real-time monitoring dashboard for pipeline execution",
+        "order": 11,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "gold"
+      },
+      {
+        "name": "04_Log_Pipeline_Execution.py",
+        "description": "Centralized logging for all pipeline executions",
+        "order": 12,
+        "timeout_minutes": 10,
+        "lakehouse_binding": "gold"
+      }
+    ]
+  },
+  "folder_structure": {
+    "/Notebooks/Phase0_Setup": "Setup and sample data generation",
+    "/Notebooks/Phase1_Bronze": "Bronze layer ingestion and validation",
+    "/Notebooks/Phase2_Silver": "Silver layer transformation and validation",
+    "/Notebooks/Phase3_Gold": "Gold layer aggregations and validation",
+    "/Notebooks/Phase4_Orchestration": "Pipeline orchestration and monitoring",
+    "/Notebooks/Examples": "Domain-specific medallion examples",
+    "/Files/config": "Configuration files (JSON, YAML)",
+    "/Files/logs": "Pipeline execution logs",
+    "/Files/monitoring": "Monitoring and metrics data"
+  },
+  "pipeline": {
+    "name": "medallion_master_orchestration",
+    "description": "Master pipeline for daily Bronze-Silver-Gold ETL",
+    "schedule": {
+      "trigger_type": "scheduled",
+      "recurrence": "daily",
+      "time_utc": "02:00",
+      "timezone": "UTC"
+    },
+    "error_handling": {
+      "retry_enabled": true,
+      "max_retries": 3,
+      "backoff_type": "exponential",
+      "backoff_base_seconds": 30
+    },
+    "notifications": {
+      "email_on_failure": true,
+      "slack_webhook_enabled": true,
+      "webhook_url": "${SLACK_WEBHOOK_URL}"
+    }
+  },
+  "powerbi": {
+    "semantic_model_name": "medallion_analytics_model",
+    "semantic_model_description": "Direct Lake semantic model on Gold layer",
+    "connectivity": "DirectLake",
+    "dashboards": [
+      {
+        "name": "Executive_Summary",
+        "description": "High-level KPIs and trends",
+        "target_table": "gold_summary_daily"
+      },
+      {
+        "name": "Operational_Dashboard",
+        "description": "Daily operational details and metrics",
+        "target_table": "gold_operational_metrics"
+      },
+      {
+        "name": "Data_Quality_Dashboard",
+        "description": "Data quality metrics and validation results",
+        "target_table": "gold_quality_metrics"
+      }
+    ]
+  },
+  "validation": {
+    "phase_1": {
+      "checks": ["lakehouses_created", "folder_structure_exists"]
+    },
+    "phase_2": {
+      "checks": ["config_files_accessible", "configurations_valid"]
+    },
+    "phase_3": {
+      "checks": ["notebooks_deployed", "lakehouse_bindings_correct"]
+    },
+    "phase_4": {
+      "checks": ["bronze_data_ingested", "silver_data_transformed", "gold_aggregations_complete", "row_counts_match"]
+    },
+    "phase_5": {
+      "checks": ["pipeline_created", "triggers_configured", "notifications_working"]
+    },
+    "phase_6": {
+      "checks": ["semantic_model_created", "directlake_connected", "dashboards_published"]
+    },
+    "phase_7": {
+      "checks": ["data_quality_passed", "zorder_optimized", "query_latency_acceptable", "deployment_report_generated"]
+    }
+  }
+}

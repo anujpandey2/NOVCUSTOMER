@@ -1,0 +1,5 @@
+Cell 1: Importing libraries and configuration...
+Traceback (most recent call last):
+  File "C:\Users\anujpandey\fabric_pipeline_notebook.py", line 19, in <module>
+    from pyspark.sql import SparkSession
+ModuleNotFoundError: No module named 'pyspark'

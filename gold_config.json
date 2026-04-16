@@ -1,0 +1,162 @@
+{
+  "layer": "gold",
+  "description": "Gold Layer Configuration - Analytics Ready Aggregations",
+  "aggregation_patterns": {
+    "daily_summary": {
+      "description": "Daily business metrics and aggregations",
+      "time_grain": "day",
+      "dimensions": ["category", "region", "customer_segment"],
+      "measures": [
+        {
+          "name": "total_amount",
+          "formula": "SUM(amount)"
+        },
+        {
+          "name": "transaction_count",
+          "formula": "COUNT(*)"
+        },
+        {
+          "name": "average_amount",
+          "formula": "AVG(amount)"
+        },
+        {
+          "name": "max_amount",
+          "formula": "MAX(amount)"
+        },
+        {
+          "name": "min_amount",
+          "formula": "MIN(amount)"
+        }
+      ]
+    },
+    "monthly_summary": {
+      "description": "Monthly aggregated metrics",
+      "time_grain": "month",
+      "dimensions": ["category", "region"],
+      "measures": [
+        {
+          "name": "total_amount",
+          "formula": "SUM(amount)"
+        },
+        {
+          "name": "transaction_count",
+          "formula": "COUNT(*)"
+        },
+        {
+          "name": "unique_customers",
+          "formula": "COUNT(DISTINCT customer_id)"
+        }
+      ]
+    },
+    "customer_analytics": {
+      "description": "Customer-level analytics and RFM analysis",
+      "time_grain": "day",
+      "dimensions": ["customer_id", "customer_segment"],
+      "measures": [
+        {
+          "name": "lifetime_value",
+          "formula": "SUM(amount)"
+        },
+        {
+          "name": "transaction_frequency",
+          "formula": "COUNT(*)"
+        },
+        {
+          "name": "days_since_last_transaction",
+          "formula": "DATEDIFF(CURRENT_DATE, MAX(transaction_date))"
+        },
+        {
+          "name": "average_transaction_value",
+          "formula": "AVG(amount)"
+        }
+      ]
+    }
+  },
+  "table_specs": {
+    "gold_transactions_daily": {
+      "source_tables": ["silver.transactions_cleaned"],
+      "schema": {
+        "period_date": "DATE",
+        "category": "STRING",
+        "region": "STRING",
+        "customer_segment": "STRING",
+        "total_amount": "DECIMAL(18, 2)",
+        "transaction_count": "BIGINT",
+        "average_amount": "DECIMAL(18, 2)",
+        "unique_customers": "BIGINT",
+        "created_timestamp": "TIMESTAMP"
+      },
+      "partition_by": ["period_date"],
+      "zorder_by": ["category", "region", "customer_segment"],
+      "write_mode": "overwrite",
+      "format": "delta"
+    },
+    "gold_customer_metrics": {
+      "source_tables": ["silver.transactions_cleaned"],
+      "schema": {
+        "period_date": "DATE",
+        "customer_id": "STRING",
+        "customer_segment": "STRING",
+        "lifetime_value": "DECIMAL(18, 2)",
+        "transaction_frequency": "BIGINT",
+        "days_since_last_transaction": "INT",
+        "average_transaction_value": "DECIMAL(18, 2)",
+        "created_timestamp": "TIMESTAMP"
+      },
+      "partition_by": ["period_date"],
+      "zorder_by": ["customer_segment", "customer_id"],
+      "write_mode": "overwrite",
+      "format": "delta"
+    },
+    "gold_summary_monthly": {
+      "source_tables": ["silver.transactions_cleaned"],
+      "schema": {
+        "year": "INT",
+        "month": "INT",
+        "category": "STRING",
+        "total_transactions": "BIGINT",
+        "total_amount": "DECIMAL(18, 2)",
+        "unique_customers": "BIGINT",
+        "created_timestamp": "TIMESTAMP"
+      },
+      "partition_by": ["year", "month"],
+      "zorder_by": ["category"],
+      "write_mode": "overwrite",
+      "format": "delta"
+    }
+  },
+  "spark_optimization": {
+    "vorder_enabled": true,
+    "optimize_write_enabled": true,
+    "target_file_size_gb": 1,
+    "enable_optimize": true,
+    "enable_zorder": true,
+    "compression": "snappy",
+    "delta_stats_enabled": true
+  },
+  "performance_targets": {
+    "query_latency_p95_seconds": 10,
+    "query_latency_p99_seconds": 15,
+    "file_count_optimization": {
+      "target_files_per_partition": 1,
+      "max_files_per_partition": 5
+    }
+  },
+  "retention_policy": {
+    "retention_days": 2555,
+    "archive_after_days": 730,
+    "full_refresh_frequency": "monthly"
+  },
+  "validation": {
+    "post_write_checks": [
+      "row_count_validation",
+      "measure_sanity_checks",
+      "date_range_validation",
+      "no_nulls_in_key_columns"
+    ],
+    "comparison_checks": [
+      "sum_amount_variance < 0.1%",
+      "count_variance < 0.1%"
+    ]
+  }
+}
