@@ -1,0 +1,184 @@
+{
+  "orchestration": {
+    "pipeline_name": "medallion_master_orchestration",
+    "workspace_id": "4850ec28-2ac1-4c80-a70d-977ab969085d",
+    "description": "Master orchestration for Bronze-Silver-Gold medallion architecture"
+  },
+  "execution_flow": {
+    "activities": [
+      {
+        "order": 1,
+        "name": "bronze_ingestion",
+        "type": "notebook",
+        "notebook": "01_Bronze_Ingestion.py",
+        "lakehouse": "medallion_bronze",
+        "timeout_minutes": 30,
+        "depends_on": []
+      },
+      {
+        "order": 2,
+        "name": "bronze_validation",
+        "type": "notebook",
+        "notebook": "01_Bronze_Validation.py",
+        "lakehouse": "medallion_bronze",
+        "timeout_minutes": 15,
+        "depends_on": ["bronze_ingestion"],
+        "on_failure": "alert_and_stop"
+      },
+      {
+        "order": 3,
+        "name": "quality_rules",
+        "type": "notebook",
+        "notebook": "02_Quality_Rules_Engine.py",
+        "lakehouse": "medallion_silver",
+        "timeout_minutes": 15,
+        "depends_on": ["bronze_validation"]
+      },
+      {
+        "order": 4,
+        "name": "silver_transformation",
+        "type": "notebook",
+        "notebook": "02_Silver_Transform.py",
+        "lakehouse": "medallion_silver",
+        "timeout_minutes": 30,
+        "depends_on": ["quality_rules"],
+        "parameters": {
+          "processing_date": "{{ PipelineRunDate }}",
+          "incremental_mode": true
+        }
+      },
+      {
+        "order": 5,
+        "name": "silver_validation",
+        "type": "notebook",
+        "notebook": "02_Silver_Validation.py",
+        "lakehouse": "medallion_silver",
+        "timeout_minutes": 15,
+        "depends_on": ["silver_transformation"],
+        "on_failure": "alert_and_stop"
+      },
+      {
+        "order": 6,
+        "name": "gold_aggregations",
+        "type": "notebook",
+        "notebook": "03_Gold_Aggregations.py",
+        "lakehouse": "medallion_gold",
+        "timeout_minutes": 30,
+        "depends_on": ["silver_validation"],
+        "parameters": {
+          "processing_date": "{{ PipelineRunDate }}",
+          "aggregation_types": ["daily", "monthly", "customer_metrics"]
+        }
+      },
+      {
+        "order": 7,
+        "name": "gold_validation",
+        "type": "notebook",
+        "notebook": "03_Gold_Validation.py",
+        "lakehouse": "medallion_gold",
+        "timeout_minutes": 15,
+        "depends_on": ["gold_aggregations"],
+        "on_failure": "alert_and_stop"
+      },
+      {
+        "order": 8,
+        "name": "pipeline_monitoring",
+        "type": "notebook",
+        "notebook": "04_Pipeline_Monitoring.py",
+        "lakehouse": "medallion_gold",
+        "timeout_minutes": 10,
+        "depends_on": ["gold_validation"]
+      }
+    ]
+  },
+  "scheduling": {
+    "trigger_type": "scheduled",
+    "recurrence": "daily",
+    "time_utc": "02:00",
+    "timezone": "UTC",
+    "frequency": "every_day",
+    "start_date": "2024-12-20",
+    "end_date": null,
+    "description": "Daily medallion layer orchestration starting at 2 AM UTC"
+  },
+  "error_handling": {
+    "retry_policy": {
+      "enabled": true,
+      "max_retries": 3,
+      "backoff_type": "exponential",
+      "backoff_base_seconds": 30,
+      "backoff_multiplier": 2
+    },
+    "failure_actions": {
+      "pipeline_level": "stop_on_failure",
+      "activity_level": {
+        "critical_activities": ["bronze_validation", "silver_validation", "gold_validation"],
+        "action": "stop_pipeline"
+      }
+    }
+  },
+  "notifications": {
+    "email": {
+      "enabled": true,
+      "send_on": ["failure", "timeout"],
+      "recipients": ["${NOTIFICATION_EMAIL}"]
+    },
+    "webhook": {
+      "enabled": true,
+      "send_on": ["start", "complete", "failure"],
+      "urls": {
+        "slack": "${SLACK_WEBHOOK_URL}",
+        "teams": "${TEAMS_WEBHOOK_URL}"
+      }
+    },
+    "log_analytics": {
+      "enabled": true,
+      "workspace_id": "${LOG_ANALYTICS_WORKSPACE_ID}",
+      "send_metrics": true
+    }
+  },
+  "parameters": {
+    "global": {
+      "environment": "production",
+      "processing_date": "{{ yesterday() }}",
+      "incremental_mode": true,
+      "data_quality_threshold": 95
+    },
+    "layer_specific": {
+      "bronze": {
+        "source_paths": ["/Files/landing/daily/"],
+        "retention_days": 90
+      },
+      "silver": {
+        "retention_days": 730,
+        "quality_threshold": 0.95
+      },
+      "gold": {
+        "retention_days": 2555,
+        "aggregation_types": ["daily", "monthly", "customer_metrics"]
+      }
+    }
+  },
+  "monitoring": {
+    "collect_metrics": true,
+    "metrics": {
+      "bronze": ["ingestion_row_count", "source_file_count", "bytes_ingested"],
+      "silver": ["input_row_count", "output_row_count", "quality_pass_rate"],
+      "gold": ["aggregation_row_count", "table_count", "query_latency_p95"]
+    },
+    "dashboards": [
+      {
+        "name": "Pipeline_Execution_Status",
+        "table": "gold.pipeline_execution_logs"
+      },
+      {
+        "name": "Data_Quality_Metrics",
+        "table": "gold.quality_metrics"
+      },
+      {
+        "name": "Performance_Baseline",
+        "table": "gold.performance_metrics"
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "layer": "bronze",
+  "description": "Bronze Layer Configuration - Raw Data Ingestion",
+  "table_specs": {
+    "events_raw": {
+      "description": "Raw event data from all sources",
+      "schema": {
+        "event_id": "STRING",
+        "event_type": "STRING",
+        "event_timestamp": "TIMESTAMP",
+        "source_system": "STRING",
+        "user_id": "STRING",
+        "properties": "MAP<STRING, STRING>",
+        "ingestion_timestamp": "TIMESTAMP",
+        "source_file": "STRING",
+        "batch_id": "STRING",
+        "ingestion_date": "DATE"
+      },
+      "partition_by": ["ingestion_date"],
+      "write_mode": "append",
+      "format": "delta"
+    },
+    "transactions_raw": {
+      "description": "Raw transaction records",
+      "schema": {
+        "transaction_id": "STRING",
+        "transaction_date": "DATE",
+        "transaction_timestamp": "TIMESTAMP",
+        "amount": "DECIMAL(18, 2)",
+        "currency": "STRING",
+        "customer_id": "STRING",
+        "merchant_id": "STRING",
+        "status": "STRING",
+        "ingestion_timestamp": "TIMESTAMP",
+        "source_file": "STRING",
+        "batch_id": "STRING",
+        "ingestion_date": "DATE"
+      },
+      "partition_by": ["ingestion_date"],
+      "write_mode": "append",
+      "format": "delta"
+    }
+  },
+  "ingestion_patterns": {
+    "csv_ingestion": {
+      "enabled": true,
+      "format": "csv",
+      "header": true,
+      "infer_schema": false,
+      "options": {
+        "encoding": "UTF-8",
+        "ignoreLeadingWhiteSpace": true,
+        "ignoreTrailingWhiteSpace": true
+      }
+    },
+    "parquet_ingestion": {
+      "enabled": true,
+      "format": "parquet"
+    },
+    "json_ingestion": {
+      "enabled": true,
+      "format": "json",
+      "multiline": true
+    }
+  },
+  "metadata_columns": {
+    "ingestion_timestamp": "current_timestamp()",
+    "source_file": "input_file_name()",
+    "batch_id": "generated_uuid()",
+    "ingestion_date": "current_date()"
+  },
+  "retention_policy": {
+    "retention_days": 90,
+    "archive_after_days": 60,
+    "delete_after_days": 90
+  },
+  "performance": {
+    "write_optimized": true,
+    "max_file_size_mb": 128,
+    "target_partition_size_mb": 256,
+    "enable_autovacuum": true,
+    "autovacuum_interval_days": 7
+  }
+}

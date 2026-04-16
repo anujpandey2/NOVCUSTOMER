@@ -1,0 +1,231 @@
+{
+  "deployment": {
+    "workspace_id": "4850ec28-2ac1-4c80-a70d-977ab969085d",
+    "timestamp": "2026-03-31T11:48:15.237352",
+    "phases": 4
+  },
+  "lakehouses": {
+    "medallion_bronze": {
+      "description": "Bronze layer lakehouse for raw data ingestion",
+      "notebooks": [
+        {
+          "path": "C:\\Users\\anujpandey\\00_Generate_Sample_Data.py",
+          "name": "00_Generate_Sample_Data",
+          "lakehouse": "medallion_bronze",
+          "order": 1
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\00_Workspace_Setup.py",
+          "name": "00_Workspace_Setup",
+          "lakehouse": "medallion_bronze",
+          "order": 2
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\01_Bronze_Ingestion.py",
+          "name": "01_Bronze_Ingestion",
+          "lakehouse": "medallion_bronze",
+          "order": 3
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\01_Bronze_Validation.py",
+          "name": "01_Bronze_Validation",
+          "lakehouse": "medallion_bronze",
+          "order": 4
+        }
+      ]
+    },
+    "medallion_silver": {
+      "description": "Silver layer lakehouse for validated and transformed data",
+      "notebooks": [
+        {
+          "path": "C:\\Users\\anujpandey\\02_Quality_Rules_Engine.py",
+          "name": "02_Quality_Rules_Engine",
+          "lakehouse": "medallion_silver",
+          "order": 5
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\02_Silver_Transform.py",
+          "name": "02_Silver_Transform",
+          "lakehouse": "medallion_silver",
+          "order": 6
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\02_Silver_Validation.py",
+          "name": "02_Silver_Validation",
+          "lakehouse": "medallion_silver",
+          "order": 7
+        }
+      ]
+    },
+    "medallion_gold": {
+      "description": "Gold layer lakehouse for aggregated business data",
+      "notebooks": [
+        {
+          "path": "C:\\Users\\anujpandey\\03_Gold_Aggregations.py",
+          "name": "03_Gold_Aggregations",
+          "lakehouse": "medallion_gold",
+          "order": 8
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\03_Gold_Validation.py",
+          "name": "03_Gold_Validation",
+          "lakehouse": "medallion_gold",
+          "order": 9
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\04_Master_Orchestration_Pipeline.py",
+          "name": "04_Master_Orchestration_Pipeline",
+          "lakehouse": "medallion_gold",
+          "order": 10
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\04_Pipeline_Monitoring.py",
+          "name": "04_Pipeline_Monitoring",
+          "lakehouse": "medallion_gold",
+          "order": 11
+        },
+        {
+          "path": "C:\\Users\\anujpandey\\04_Log_Pipeline_Execution.py",
+          "name": "04_Log_Pipeline_Execution",
+          "lakehouse": "medallion_gold",
+          "order": 12
+        }
+      ]
+    }
+  },
+  "notebooks_by_phase": {
+    "Phase 0 - Setup": [
+      {
+        "path": "C:\\Users\\anujpandey\\00_Generate_Sample_Data.py",
+        "name": "00_Generate_Sample_Data",
+        "lakehouse": "medallion_bronze",
+        "order": 1
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\00_Workspace_Setup.py",
+        "name": "00_Workspace_Setup",
+        "lakehouse": "medallion_bronze",
+        "order": 2
+      }
+    ],
+    "Phase 1 - Bronze": [
+      {
+        "path": "C:\\Users\\anujpandey\\01_Bronze_Ingestion.py",
+        "name": "01_Bronze_Ingestion",
+        "lakehouse": "medallion_bronze",
+        "order": 3
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\01_Bronze_Validation.py",
+        "name": "01_Bronze_Validation",
+        "lakehouse": "medallion_bronze",
+        "order": 4
+      }
+    ],
+    "Phase 2 - Silver": [
+      {
+        "path": "C:\\Users\\anujpandey\\02_Quality_Rules_Engine.py",
+        "name": "02_Quality_Rules_Engine",
+        "lakehouse": "medallion_silver",
+        "order": 5
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\02_Silver_Transform.py",
+        "name": "02_Silver_Transform",
+        "lakehouse": "medallion_silver",
+        "order": 6
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\02_Silver_Validation.py",
+        "name": "02_Silver_Validation",
+        "lakehouse": "medallion_silver",
+        "order": 7
+      }
+    ],
+    "Phase 3 - Gold": [
+      {
+        "path": "C:\\Users\\anujpandey\\03_Gold_Aggregations.py",
+        "name": "03_Gold_Aggregations",
+        "lakehouse": "medallion_gold",
+        "order": 8
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\03_Gold_Validation.py",
+        "name": "03_Gold_Validation",
+        "lakehouse": "medallion_gold",
+        "order": 9
+      }
+    ],
+    "Phase 4 - Orchestration": [
+      {
+        "path": "C:\\Users\\anujpandey\\04_Master_Orchestration_Pipeline.py",
+        "name": "04_Master_Orchestration_Pipeline",
+        "lakehouse": "medallion_gold",
+        "order": 10
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\04_Pipeline_Monitoring.py",
+        "name": "04_Pipeline_Monitoring",
+        "lakehouse": "medallion_gold",
+        "order": 11
+      },
+      {
+        "path": "C:\\Users\\anujpandey\\04_Log_Pipeline_Execution.py",
+        "name": "04_Log_Pipeline_Execution",
+        "lakehouse": "medallion_gold",
+        "order": 12
+      }
+    ]
+  },
+  "deployment_steps": [
+    {
+      "step": 1,
+      "name": "Create Lakehouses",
+      "action": "POST /workspaces/{workspaceId}/lakehouses",
+      "resources": [
+        "medallion_bronze",
+        "medallion_silver",
+        "medallion_gold"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Deploy Notebooks",
+      "action": "POST /workspaces/{workspaceId}/items",
+      "count": 12,
+      "sequence": "Sequential with 3s delays for rate limiting"
+    },
+    {
+      "step": 3,
+      "name": "Bind Notebooks to Lakehouses",
+      "action": "PATCH /workspaces/{workspaceId}/items/{notebookId}",
+      "bindings": {
+        "medallion_bronze": [
+          "00_Generate_Sample_Data",
+          "00_Workspace_Setup",
+          "01_Bronze_Ingestion",
+          "01_Bronze_Validation"
+        ],
+        "medallion_silver": [
+          "02_Quality_Rules_Engine",
+          "02_Silver_Transform",
+          "02_Silver_Validation"
+        ],
+        "medallion_gold": [
+          "03_Gold_Aggregations",
+          "03_Gold_Validation",
+          "04_Master_Orchestration_Pipeline",
+          "04_Pipeline_Monitoring",
+          "04_Log_Pipeline_Execution"
+        ]
+      }
+    },
+    {
+      "step": 4,
+      "name": "Execute Notebooks Sequentially",
+      "action": "POST /workspaces/{workspaceId}/notebooks/{notebookId}/jobs/instances",
+      "sequence": "Ordered 1-12 with 3s delays",
+      "polling": "Every 5 seconds with 10 minute timeout per notebook"
+    }
+  ]
+}

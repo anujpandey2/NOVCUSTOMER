@@ -1,0 +1,133 @@
+{
+  "layer": "silver",
+  "description": "Silver Layer Configuration - Cleaned and Validated Data",
+  "quality_rules": {
+    "deduplication": {
+      "enabled": true,
+      "key_columns": ["transaction_id", "transaction_date"],
+      "strategy": "keep_latest"
+    },
+    "null_handling": {
+      "required_columns": ["transaction_id", "customer_id", "amount"],
+      "drop_if_null": true,
+      "fill_if_optional": {
+        "source_system": "UNKNOWN",
+        "currency": "USD"
+      }
+    },
+    "range_validation": {
+      "amount": {
+        "min": 0,
+        "max": 1000000
+      },
+      "transaction_timestamp": {
+        "check": "not_future_dated"
+      }
+    },
+    "referential_integrity": {
+      "customer_id": {
+        "check": "valid_format",
+        "pattern": "^[A-Z]{3}[0-9]{6}$"
+      }
+    }
+  },
+  "transformations": {
+    "column_standardization": {
+      "enabled": true,
+      "rules": {
+        "snake_case": true,
+        "lowercase_strings": true,
+        "trim_whitespace": true
+      }
+    },
+    "derived_columns": {
+      "transaction_day_of_week": "dayofweek(transaction_date)",
+      "transaction_hour": "hour(transaction_timestamp)",
+      "transaction_month": "month(transaction_date)",
+      "transaction_year": "year(transaction_date)"
+    },
+    "data_type_mappings": {
+      "amount": "DECIMAL(18, 2)",
+      "transaction_date": "DATE",
+      "customer_id": "STRING",
+      "status": "STRING"
+    }
+  },
+  "schema_evolution": {
+    "enabled": true,
+    "merge_schema": true,
+    "handle_new_columns": "add_with_null",
+    "handle_dropped_columns": "log_and_notify"
+  },
+  "table_specs": {
+    "events_cleaned": {
+      "source_table": "bronze.events_raw",
+      "schema": {
+        "event_id": "STRING",
+        "event_type": "STRING",
+        "event_timestamp": "TIMESTAMP",
+        "source_system": "STRING",
+        "user_id": "STRING",
+        "event_date": "DATE",
+        "event_hour": "INT",
+        "properties_json": "STRING"
+      },
+      "partition_by": ["event_date"],
+      "zorder_by": ["source_system", "event_type"],
+      "write_mode": "overwrite",
+      "format": "delta"
+    },
+    "transactions_cleaned": {
+      "source_table": "bronze.transactions_raw",
+      "schema": {
+        "transaction_id": "STRING",
+        "transaction_date": "DATE",
+        "transaction_timestamp": "TIMESTAMP",
+        "amount": "DECIMAL(18, 2)",
+        "currency": "STRING",
+        "customer_id": "STRING",
+        "merchant_id": "STRING",
+        "status": "STRING",
+        "day_of_week": "INT",
+        "hour_of_day": "INT",
+        "month": "INT",
+        "year": "INT"
+      },
+      "partition_by": ["transaction_date"],
+      "zorder_by": ["customer_id", "merchant_id", "status"],
+      "write_mode": "overwrite",
+      "format": "delta"
+    }
+  },
+  "validation": {
+    "pre_write_checks": [
+      "schema_conformance",
+      "unique_key_validation",
+      "null_value_validation",
+      "range_validation"
+    ],
+    "post_write_checks": [
+      "row_count_comparison",
+      "column_count_validation",
+      "data_type_verification"
+    ],
+    "metrics_collection": {
+      "rows_before": true,
+      "rows_after": true,
+      "rows_rejected": true,
+      "quality_score": true,
+      "execution_time_ms": true
+    }
+  },
+  "retention_policy": {
+    "retention_days": 730,
+    "archive_after_days": 365
+  },
+  "performance": {
+    "vorder_enabled": true,
+    "optimize_write_enabled": true,
+    "target_file_size_gb": 1,
+    "enable_optimize": true,
+    "optimize_interval_days": 7
+  }
+}

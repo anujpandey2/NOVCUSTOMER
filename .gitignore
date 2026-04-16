@@ -1,0 +1,101 @@
+# System & OS files
+NTUSER.DAT*
+ntuser.*
+*.regtrans-ms
+*.blf
+AppData/
+Application Data
+Cookies
+Local Settings
+My Documents
+NetHood
+PrintHood
+Recent
+SendTo
+Start Menu
+Templates
+3D Objects/
+Contacts/
+Documents/
+Downloads/
+Favorites/
+Links/
+Music/
+Pictures/
+Saved Games/
+Searches/
+Videos/
+IntelGraphicsProfiles/
+OneDrive*/
+OneLake*/
+Microsoft/
+New folder/
+
+# Dev tools & caches
+.agents/
+.azcopy/
+.azd/
+.azure/
+.azuredatastudio/
+.config/
+.copilot/
+.databricks/
+.databrickscfg*
+.dbt/
+.docker/
+.dotnet/
+.ghcp-appmod/
+.ipython/
+.local/
+.nuget/
+.packagemanagement/
+.ssh/
+.templateengine/
+.vscode/
+.work-iq-cli/
+.bash_history
+.lesshst
+.node_repl_history
+.gitconfig
+venv/
+node_modules/
+go/
+
+# Project subdirectories (separate repos or not needed)
+AI-ASSISTED-CODING/
+AIDEMO/
+Agentsleague/
+agentsleague-techconnect/
+AzureAI/
+cc-proj/
+CICDfabric/
+copilot-cli-for-beginners/
+Demo/
+demo_openai/
+enterprise_chatgpt/
+Fabric-OpenAI-POC/
+FabricIQ/
+Fabric_CICD/
+fabric-workspace/
+fabriccli/
+fabricdbtproj/
+fabricsqlagent/
+MCPFabric/
+MCP/
+mcpjoke/
+my_project/
+OPENAI/
+Postgreschat/
+Postman/
+proj_github_copilot/
+skills-for-fabric/
+source/
+sql-pool-migration/
+sqlagenticappwithfabric/
+sqlagenticdemo/
+anujfabric/
+vbd-copilot/
+vscodemcp/
+
+# Package lock
+package-lock.json
